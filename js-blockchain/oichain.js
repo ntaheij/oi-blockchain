@@ -31,7 +31,7 @@ class Block {
             this.hash = this.getHash();
         }
     }
-
+    
     hasValidTransactions(chain) {
         let gas = 0, reward = 0;
 
@@ -55,9 +55,9 @@ class Blockchain {
     constructor() {
         const initalCoinRelease = new Transaction(MINT_PUBLIC_ADDRESS, holderKeyPair.getPublic("hex"), 100000);
         this.chain = [new Block(Date.now().toString(), [initalCoinRelease])];
-        this.difficulty = 1;
+        this.difficulty = 6;
         this.blockTime = 30000;
-        this.transactions = [];
+        this.pendingTransactions = [];
         this.reward = 297;
         this.nextId = 0;
     }
@@ -98,14 +98,14 @@ class Blockchain {
 
     addTransaction(transaction) {
         if (transaction.isValid(transaction, this)) {
-            this.transactions.push(transaction);
+            this.pendingTransactions.push(transaction);
         }
     }
 
     mineTransactions(rewardAddress) {
         let gas = 0;
 
-        this.transactions.forEach(transaction => {
+        this.pendingTransactions.forEach(transaction => {
             gas += transaction.gas;
         });
 
@@ -113,8 +113,8 @@ class Blockchain {
         rewardTransaction.sign(MINT_KEY_PAIR);
 
         // Prevent people from minting coins and mine the minting transaction.
-        if (this.transactions.length !== 0) this.addBlock(new Block(Date.now().toString(), [rewardTransaction, ...this.transactions]));
-        this.transactions = [];
+        if (this.pendingTransactions.length !== 0) this.addBlock(new Block(Date.now().toString(), [rewardTransaction, ...this.pendingTransactions]));
+        this.pendingTransactions = [];
     }
 
     isValid(blockchain = this) {
@@ -172,7 +172,7 @@ const differentWallet = ec.genKeyPair();
 
 // Create a transaction
 const transaction = new Transaction(holderKeyPair.getPublic("hex"), differentWallet.getPublic("hex"), 100, 10);
-const transaction2 = new Transaction(holderKeyPair.getPublic("hex"), differentWallet.getPublic("hex"), 100, 10);
+const transaction2 = new Transaction(differentWallet.getPublic("hex"), holderKeyPair.getPublic("hex"), 400, 10);
 const transaction3 = new Transaction(holderKeyPair.getPublic("hex"), differentWallet.getPublic("hex"), 100, 10);
 // Sign the transaction
 transaction.sign(holderKeyPair);
